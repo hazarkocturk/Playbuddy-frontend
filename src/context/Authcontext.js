@@ -47,6 +47,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       setAuthState({ token: null, authenticated: false });
+      delete axios.defaults.headers.common['Authorization'];
       await SecureStore.deleteItemAsync(TOKEN_KEY);
     } catch (error) {
       return Promise.reject(error);
