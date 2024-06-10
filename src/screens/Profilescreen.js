@@ -1,12 +1,10 @@
-import { Text, View } from 'react-native'
-import React, { Component } from 'react'
+import { View, Text } from 'react-native'
+import React from 'react'
 
-export default class Profilescreen extends Component {
-  render() {
-    return (
-      <View>
-        <Text>Profilescreen</Text>
-      </View>
-    )
-  }
+export default function Profilescreen() {
+  return (
+    <View>
+      <Text>Profile</Text>
+    </View>
+  )
 }
