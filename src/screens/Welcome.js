@@ -48,9 +48,11 @@ export default function Welcome() {
           style={{
             width: wp(100),
           }}>
-          <Image source={require('../../assets/images/Banner.png')}  style={{ 
+          <Image source={require('../../assets/images/herobanner.jpg')}  style={{ 
             width: wp(100), 
-            height: hp(40),
+            height: hp(48),
+            marginTop: 10,
+
             resizeMode: 'cover'
            }} 
            />
@@ -66,11 +68,11 @@ export default function Welcome() {
             <Text className='text-center text-gray-500 mt-2'style={{ 
               fontFamily: 'SpaceGroteskSemiBold',
               fontSize: wp(7),
-             }}>Are You Nerd and Alone?</Text>
+             }}>Are you nerd and alone?</Text>
                <Text className='text-center text-gray-500 mt-2'style={{ 
               fontFamily: 'SpaceGroteskSemiBold',
               fontSize: wp(7),
-             }}>Get in and Find Your PlayBuddy!!!</Text>
+             }}>Find your player2</Text>
            </View>
            <View>
               <TouchableOpacity className='flex-row bg-pink-300  mx-auto mt-10 py-4 px-4 rounded-xl justify-around items-center w-[45%]'>

@@ -1,10 +1,315 @@
-import { View, Text } from 'react-native'
-import React from 'react'
+import { View, Text, Image, ScrollView, Modal, TouchableOpacity, TextInput, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { useAuth } from "../context/Authcontext";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
+import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 
 export default function Profilescreen() {
+  const { authState } = useAuth();
+  const { token } = authState;
+  const user = token ? token : { name: "No User", image: null, lastName: null, age: null, city: null, country: null, tags: null };
+  const [modalVisible, setModalVisible] = useState(false);
+  const [model2, setModel2] = useState(false);
+  const [photo, setPhoto] = useState(null);
+
+  const handlePickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setPhoto(result.assets[0].uri);
+      console.log(result.assets[0].uri);
+    }
+  };
+
+  const handleUpdatePhoto = async () => {
+    try {
+      const response = await fetch("YOUR_API_ENDPOINT", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ image: photo }),
+      });
+      const data = await response.json();
+      console.log(data);
+      setModalVisible(false);  
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const cancelUpdatePhoto = () => {
+    setPhoto(null);
+    setModalVisible(false);
+  };
+
+  const handleUpdateInfo = async () => {
+    try {
+      const response = await fetch("YOUR_API_ENDPOINT", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name: user.name, lastName: user.lastName, age: user.age, city: user.city, country: user.country, tags: user.tags }),
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const defaultTags = ["Dota2", "CS:GO", "Valorant", "PUBG", "LOL", "R6", "World of Warcraft"];
+
   return (
-    <View>
-      <Text>Profile</Text>
-    </View>
-  )
+    <ScrollView style={styles.container}>
+      <View style={styles.imageContainer}>
+        <Image
+          source={user.image ? { uri: user.image } : require("../../assets/images/kalafat.png")}
+          style={styles.profileImage}
+        />
+        <View style={styles.crownIcon}>
+          <Text style={styles.crownText}>👑</Text>
+        </View>
+        <View style={styles.cameraIcon}>
+          <Ionicons
+            name="camera-reverse-outline"
+            size={hp(5)}
+            color="white"
+            title="Camera"
+            onPress={() => setModalVisible(true)}
+          />
+          <Modal visible={modalVisible} animationType="slide" transparent={true}>
+            <View style={styles.modalBackground}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.modalTitle}>Upload a new photo</Text>
+                <View style={styles.modalButtonContainer}>
+                  {photo ? (
+                    <>
+                      <TouchableOpacity onPress={handleUpdatePhoto} style={styles.modalButton}>
+                        <Ionicons name="checkmark-circle" size={hp(5)} color="white" title="Upload" />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={cancelUpdatePhoto} style={styles.modalButton}>
+                        <Ionicons name="close-circle" size={hp(5)} color="white" title="Close" />
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <>
+                      <TouchableOpacity onPress={handlePickImage} style={styles.modalButton}>
+                        <Ionicons name="image" size={hp(5)} color="white" title="Upload" />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={cancelUpdatePhoto} style={styles.modalButton}>
+                        <Ionicons name="close-circle" size={hp(5)} color="white" title="Close" />
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </View>
+      </View>
+      <View style={styles.infoContainer}>
+        <View style={styles.nameContainer}>
+          <Text style={styles.nameText}>
+            {user.name ? user.name : "Deniz"} {user.lastName ? user.lastName : "Kalafat"}, {user.age ? user.age : 40}
+          </Text>
+          <View style={styles.editIcon}>
+            <Ionicons
+              name="pencil-outline"
+              size={hp(4)}
+              title="Edit"
+              color="white"
+              onPress={() => setModel2(true)}
+            />
+            <Modal visible={model2} animationType="slide" transparent={true}>
+              <View style={styles.modalBackground}>
+                <View style={styles.modalContainer}>
+                  <Text style={styles.modalTitle}>Edit your profile</Text>
+                  <TextInput placeholder="Name" value={user.name} onChangeText={(text) => (user.name = text)} style={styles.input} />
+                  <TextInput placeholder="Last Name" value={user.lastName} onChangeText={(text) => (user.lastName = text)} style={styles.input} />
+                  <TextInput placeholder="Age" value={user.age} onChangeText={(text) => (user.age = text)} style={styles.input} />
+                  <TextInput placeholder="City" value={user.city} onChangeText={(text) => (user.city = text)} style={styles.input} />
+                  <TextInput placeholder="Country" value={user.country} onChangeText={(text) => (user.country = text)} style={styles.input} />
+                  <TextInput placeholder="Tags" value={user.tags} onChangeText={(text) => (user.tags = text)} style={styles.input} />
+                  <View style={styles.modalButtonContainer}>
+                    <TouchableOpacity style={styles.submitButton} onPress={handleUpdateInfo}>
+                      <Text style={styles.buttonText}>Submit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.closeButton} onPress={() => setModel2(false)}>
+                      <Text style={styles.buttonText}>Close</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+          </View>
+        </View>
+        <View style={styles.locationContainer}>
+          <Text style={styles.locationText}>
+            {user.city ? user.city : "Athens"}, {user.country ? user.country : "Greece"}
+          </Text>
+        </View>
+        <View style={styles.tagsContainer}>
+          {(user.tags ? user.tags : defaultTags).map((tag, index) => (
+            <View key={index} style={styles.tag}>
+              <Text style={styles.tagText}>{tag}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    </ScrollView>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "pink",
+  },
+  imageContainer: {
+    position: "relative",
+  },
+  profileImage: {
+    width: wp(100),
+    height: hp(50),
+    resizeMode: "cover",
+    borderBottomRightRadius: wp(5),
+    borderBottomLeftRadius: wp(5),
+  },
+  crownIcon: {
+    position: "absolute",
+    top: hp(2),
+    left: wp(4),
+    width: wp(12),
+    height: wp(12),
+    borderRadius: wp(6),
+    backgroundColor: "white",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  crownText: {
+    fontSize: hp(4),
+  },
+  cameraIcon: {
+    position: "absolute",
+    top: hp(2),
+    right: wp(4),
+    width: wp(12),
+    height: wp(12),
+    borderRadius: wp(6),
+    backgroundColor: "gray",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContainer: {
+    width: wp(80),
+    padding: wp(5),
+    backgroundColor: "white",
+    borderRadius: wp(5),
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: wp(5),
+    fontWeight: "bold",
+    marginBottom: hp(2),
+  },
+  modalButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: wp(60),
+    marginTop: hp(2),
+  },
+  modalButton: {
+    backgroundColor: "gray",
+    padding: wp(3),
+    borderRadius: wp(2),
+    alignItems: "center",
+    justifyContent: "center",
+    margin: wp(1),
+  },
+  infoContainer: {
+    padding: wp(5),
+  },
+  nameContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  nameText: {
+    fontFamily: "SpaceGroteskBold",
+    fontSize: wp(6.5),
+    fontWeight: "bold",
+  },
+  editIcon: {
+    backgroundColor: "gray",
+    borderRadius: wp(6),
+    padding: wp(2),
+    opacity: 0.5,
+  },
+  input: {
+    padding: wp(3),
+    margin: wp(2),
+    borderWidth: 1,
+    borderColor: "gray",
+    borderRadius: wp(2),
+    width: wp(70),
+  },
+  submitButton: {
+    backgroundColor: "#4CAF50",
+    padding: wp(3),
+    borderRadius: wp(2),
+    margin: wp(2),
+  },
+  closeButton: {
+    backgroundColor: "#f44336",
+    padding: wp(3),
+    borderRadius: wp(2),
+    margin: wp(2),
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  locationContainer: {
+    paddingLeft: wp(5),
+    marginTop: hp(2),
+  },
+  locationText: {
+    fontFamily: "SpaceGroteskRegular",
+    fontSize: wp(5),
+    fontWeight: "bold",
+  },
+  tagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    padding: wp(2),
+    marginTop: hp(2),
+  },
+  tag: {
+    backgroundColor: "gray",
+    opacity: 0.7,
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(3),
+    borderRadius: wp(5),
+    margin: wp(1),
+  },
+  tagText: {
+    fontFamily: "SpaceGroteskRegular",
+    fontSize: wp(4),
+    fontWeight: "bold",
+    color: "white",
+  },
+});
+

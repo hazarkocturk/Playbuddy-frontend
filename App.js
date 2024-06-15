@@ -2,10 +2,10 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Button, SafeAreaView, Text, View } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import Welcome from './src/screens/Welcome';
 import Home from './src/screens/Home';
-import Chatdetails from './src/screens/Chatdetails';
+import Chatdetails from './src/component/Chatdetails';
 import Chatscreen from './src/screens/Chatscreen';
 import Profilescreen from './src/screens/Profilescreen';
 import Login from './src/screens/Login';
@@ -14,11 +14,10 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { AuthProvider, useAuth } from './src/context/Authcontext';
 import React from 'react';
-
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
-
 
 function MainTabNavigator() {
   const { onLogout, authState } = useAuth();
@@ -26,15 +25,15 @@ function MainTabNavigator() {
   const user = token ? token : 'No User';
   const navigation = useNavigation();
 
-  handleLogout = async () => {
+  const handleLogout = async () => {
     await onLogout();
-    navigation.navigate('Welcome')
-  }
+    navigation.navigate('Welcome');
+  };
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color}) => {
+        tabBarIcon: ({ focused, color }) => {
           let iconName;
 
           if (route.name === 'Home') {
@@ -45,59 +44,104 @@ function MainTabNavigator() {
             iconName = focused ? 'person' : 'person-outline';
           }
 
-          return <Ionicons name={iconName} size= '30' color={color} />;
+          return <Ionicons name={iconName} size={hp(4)} color={color} />;
         },
         tabBarActiveTintColor: 'pink',
         tabBarInactiveTintColor: 'gray',
-        tabBarStyle:{
-          paddingTop: 5,
-          height: 90,
+        tabBarStyle: {
+          paddingTop: hp(1),
+          height: hp(10),
         },
         tabBarLabelStyle: {
-          fontSize: 14,
+          fontSize: wp(3),
           fontFamily: 'SpaceGroteskRegular',
           fontWeight: 'bold',
         },
+        headerStyle: {
+          backgroundColor: 'white',
+          shadowColor: 'transparent',
+        },
+        headerTitleStyle: {
+          fontFamily: 'SpaceGroteskBold',
+          fontSize: wp(5),
+        },
+        headerRightContainerStyle: {
+          paddingRight: wp(4),
+        },
+        headerLeftContainerStyle: {
+          paddingLeft: wp(4),
+        },
       })}
     >
-      <Tab.Screen 
-        name="Home" 
-        component={Home} 
-        options={{ 
+      <Tab.Screen
+        name="Home"
+        component={Home}
+        options={{
           headerTitle: '',
           headerRight: () => (
-            <Ionicons name='log-out-outline' size='40' color='gray'  onPress={handleLogout} title="Logout" className='text-slate-500 mr-4 mb-2' />
+            <Ionicons
+              name='log-out-outline'
+              size={hp(4)}
+              color='gray'
+              onPress={handleLogout}
+              style={styles.headerIcon}
+            />
           ),
-          headerLeft:()=>(
-            user?
-            <View className='w-10 h-10 bg-slate-400 flex justify-center items-center rounded-full ml-4 mb-2'><Text className='text-white'>{token? token.slice(0,1):null}</Text></View>:null
+          headerLeft: () => (
+            user ? (
+              <View style={styles.userIconContainer}>
+                <Text style={styles.userIconText}>{token ? token.slice(0, 1) : null}</Text>
+              </View>
+            ) : null
           ),
         }}
       />
-      <Tab.Screen name="Chat" component={Chatscreen}
-      options={{ 
-        headerTitle: '',
-        headerRight: () => (
-          <Ionicons name='log-out-outline' className='text-slate-500 mr-4 mb-2' size='40' color='gray'  onPress={handleLogout} title="Logout" />
-        ),
-        headerLeft:()=>(
-          user?
-          <View className='w-10 h-10 bg-slate-400 flex justify-center items-center rounded-full ml-4 mb-2'><Text className='text-white'>{token? token.slice(0,1):null}</Text></View>:null
-        ),
-      }} />
-      <Tab.Screen name="Profile" component={Profilescreen}
-      options={{ 
-        headerTitle: '',
-        headerRight: () => (
-          <Ionicons className='text-slate-500 mr-4 mb-2' name='log-out-outline' size='40' onPress={handleLogout} title="Logout" />
-          
-        ),
-        headerLeft:()=>(
-          user?
-          <View className='w-10 h-10 bg-slate-400 flex justify-center items-center rounded-full ml-4 mb-2'><Text className='text-white'>{token? token.slice(0,1):null}</Text></View>:null
-        ),
-        
-      }} />
+      <Tab.Screen
+        name="Chat"
+        component={Chatscreen}
+        options={{
+          headerTitle: '',
+          headerRight: () => (
+            <Ionicons
+              name='log-out-outline'
+              size={hp(4)}
+              color='gray'
+              onPress={handleLogout}
+              style={styles.headerIcon}
+            />
+          ),
+          headerLeft: () => (
+            user ? (
+              <View style={styles.userIconContainer}>
+                <Text style={styles.userIconText}>{token ? token.slice(0, 1) : null}</Text>
+              </View>
+            ) : null
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={Profilescreen}
+        options={{
+          headerTitle: '',
+          headerRight: () => (
+            <Ionicons
+              name='log-out-outline'
+              size={hp(4)}
+              color='gray'
+              onPress={handleLogout}
+              style={styles.headerIcon}
+            />
+          ),
+          headerLeft: () => (
+            user ? (
+              <View style={styles.userIconContainer}>
+                <Text style={styles.userIconText}>{token ? token.slice(0, 1) : null}</Text>
+              </View>
+            ) : null
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -106,9 +150,8 @@ const RootNavigator = () => {
   const { authState } = useAuth();
 
   return (
-   
     <NavigationContainer>
-      <Stack.Navigator 
+      <Stack.Navigator
         initialRouteName='Welcome'
         screenOptions={{ headerShown: false }}
       >
@@ -125,17 +168,37 @@ const RootNavigator = () => {
           </>
         )}
       </Stack.Navigator>
-    </NavigationContainer>  
-  
+    </NavigationContainer>
   );
-}
+};
 
 export default function App() {
   return (
     <AuthProvider>
-      
       <StatusBar style="auto" />
       <RootNavigator />
     </AuthProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  headerIcon: {
+    paddingRight: wp(4),
+    paddingBottom: hp(2),
+  },
+  userIconContainer: {
+    width: wp(10),
+    height: wp(10),
+    backgroundColor: 'slategray',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: wp(5),
+    marginLeft: wp(4),
+    marginBottom: hp(2),
+  },
+  userIconText: {
+    color: 'white',
+    fontSize: wp(5),
+    fontFamily: 'SpaceGroteskBold',
+  },
+});
