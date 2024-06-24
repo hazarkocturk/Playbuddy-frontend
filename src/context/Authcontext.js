@@ -54,13 +54,7 @@ export const AuthProvider = ({ children }) => {
       console.log('Registration Response:', response.data); // Log the response for debugging
       return response.data;
     } catch (error) {
-      if (error.response) {
-        console.error('Server Error:', error.response.data);
-      } else if (error.request) {
-        console.error('Network Error:', error.request);
-      } else {
-        console.error('Error:', error.message);
-      }
+      handleError(error);
       return Promise.reject(error);
     }
   };
@@ -78,33 +72,32 @@ export const AuthProvider = ({ children }) => {
           'Content-Type': 'multipart/form-data',
         },
       });
-      console.log(response.data);
-      const { token, username, user_id, email, profile_picture } = response.data;
 
-      setAuthState({
-        token,
-        authenticated: true,
-        username,
-        user_id,
-        email,
-        profile_picture,
-      });
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      await SecureStore.setItemAsync(TOKEN_KEY, token);
-      await SecureStore.setItemAsync('username', username);
-      await SecureStore.setItemAsync('user_id', user_id.toString());
-      await SecureStore.setItemAsync('email', email);
-      await SecureStore.setItemAsync('profile_picture', profile_picture);
+      if (response.headers['content-type'].includes('application/json')) {
+        console.log(response.data);
+        const { token, username, user_id, email, profile_picture } = response.data;
 
-      return response.data;
-    } catch (error) {
-      if (error.response) {
-        console.error('Server Error:', error.response.data); // Log the server error response
-      } else if (error.request) {
-        console.error('Network Error:', error.request); // Log the request made
+        setAuthState({
+          token,
+          authenticated: true,
+          username,
+          user_id,
+          email,
+          profile_picture,
+        });
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        await SecureStore.setItemAsync(TOKEN_KEY, token);
+        await SecureStore.setItemAsync('username', username);
+        await SecureStore.setItemAsync('user_id', user_id.toString());
+        await SecureStore.setItemAsync('email', email);
+        await SecureStore.setItemAsync('profile_picture', profile_picture);
+
+        return response.data;
       } else {
-        console.error('Error:', error.message); // Log any other errors
+        throw new Error('Unexpected response format');
       }
+    } catch (error) {
+      handleError(error);
       return Promise.reject(error);
     }
   };
@@ -156,8 +149,19 @@ export const AuthProvider = ({ children }) => {
     loadToken();
   }, []);
 
+  const handleError = (error) => {
+    if (error.response) {
+      console.error('Server Error:', error.response.data);
+    } else if (error.request) {
+      console.error('Network Error:', error.request);
+    } else {
+      console.error('Error:', error.message);
+    }
+  };
+
   const value = {
     authState,
+    setAuthState, // Provide setAuthState in the context value
     onRegister: register,
     onLogin: login,
     onLogout: logout,

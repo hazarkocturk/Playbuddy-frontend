@@ -7,7 +7,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 
 export default function Profilescreen() {
-  const { onLogout, authState } = useAuth();
+  const { onLogout, authState, setAuthState } = useAuth();
   const { token, username: initialUsername, user_id, email, profile_picture } = authState;
   const [modalVisible, setModalVisible] = useState(false);
   const [model2, setModel2] = useState(false);
@@ -102,6 +102,7 @@ export default function Profilescreen() {
       const response = await fetch(`https://playbuddy-3198da0e5cb7.herokuapp.com/api/users/${user_id}`, {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
           'Accept': 'application/json',
         },
@@ -110,6 +111,10 @@ export default function Profilescreen() {
 
       const data = await response.json();
       if (response.ok) {
+        setAuthState((prevState) => ({
+          ...prevState,
+          profile_picture: data.profile_picture, // Assuming the new URL is returned in the response
+        }));
         setModalVisible(false);
         Alert.alert('Success', 'Profile picture updated successfully.');
       } else {
@@ -140,6 +145,7 @@ export default function Profilescreen() {
       const response = await fetch(`https://playbuddy-3198da0e5cb7.herokuapp.com/api/users/${user_id}`, {
         method: "POST",
         headers: {
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
           'Accept': 'application/json',
         },
@@ -267,6 +273,7 @@ export default function Profilescreen() {
     </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
