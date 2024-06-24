@@ -28,7 +28,24 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      ["expo-image-picker", 
+      { 
+      "photosPermission" : "Select and upload images",
+      "cameraPermission" : "Allow ${PRODUCT_NAME} to access your camera"
+    }     
     ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9b6e2efe-5d3b-420b-a6b4-5473c07084fa"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9b6e2efe-5d3b-420b-a6b4-5473c07084fa"
+    }
   }
 }

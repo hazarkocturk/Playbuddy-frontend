@@ -8,52 +8,89 @@ import ChatCard from '../component/ChatCard';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Chatscreen() {
-  const { onLogout, authState } = useAuth();
-  const { token } = authState;
-  const user = token ? token : 'No User';
+  const { authState } = useAuth();
+  const { token, username, user_id, email, profile_picture } = authState;
 
   const [entries, setEntries] = useState([]);
   const [allEntries, setAllEntries] = useState([]);
   const [search, setSearch] = useState('');
   const [chatModal, setChatModal] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState(null);
+  const [users, setUsers] = useState([]);
 
   const handleChatModal = (entry) => {
     setSelectedEntry(entry);
     setChatModal(true);
-  }
+  };
 
   const closeModal = () => {
     setChatModal(false);
     setSelectedEntry(null);
-  }
+  };
 
   useEffect(() => {
     const fetchEntries = async () => {
       try {
-        const response = await fetch('https://randomuser.me/api/?results=10');
+        const response = await fetch(`https://playbuddy-3198da0e5cb7.herokuapp.com/api/matches/${user_id}`);
         const data = await response.json();
-        setEntries(data.results);
-        setAllEntries(data.results); 
-        console.log(data);
+        console.log('Matches:', data);
+        console.log('User ID:', user_id);
+
+        const filteredData = data.filter((entry) => entry.user_1_id === user_id || entry.user_2_id === user_id);
+        console.log('Filtered Matches:', filteredData);
+
+        setEntries(filteredData);
+        setAllEntries(filteredData);
+       
       } catch (error) {
         console.error(error);
       }
     };
     fetchEntries();
-  }, [user]);
+  }, [user_id]);
+
+  useEffect(() => {
+    const fetchUserEntries = async () => {
+      try {
+        const response = await fetch('https://playbuddy-3198da0e5cb7.herokuapp.com/api/users');
+        const data = await response.json();
+        const filteredData = data.filter((entry) => entry.email !== email);
+        console.log('Users:', filteredData);
+        setUsers(filteredData);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+    fetchUserEntries();
+  }, []);
+
+  const getUsernameById = (userId) => {
+    const user = users.find((user) => user.id === userId);
+    return user ? user.username : 'Unknown';
+  };
+
+  const getProfilePictureById = (userId) => {
+    const user = users.find((user) => user.id === userId);
+    return user ? user.profile_picture : 'Unknown';
+  };
 
   const handleSearch = (text) => {
     setSearch(text);
     if (text === '') {
-      setEntries(allEntries); 
+      setEntries(allEntries);
     } else {
       const filteredEntries = allEntries.filter((entry) => {
-        return entry.name.first.toLowerCase().includes(text.toLowerCase());
+        const user_2_name = getUsernameById(entry.user_2_id);
+        return user_2_name.toLowerCase().includes(text.toLowerCase());
       });
       setEntries(filteredEntries);
     }
   };
+
+  const uniqueEntries = entries.filter((entry, index, self) =>
+    index === self.findIndex((e) => (e.user_1_id === entry.user_1_id && e.user_2_id === entry.user_2_id) ||
+                                     (e.user_1_id === entry.user_2_id && e.user_2_id === entry.user_1_id))
+  );
 
   return (
     <View style={styles.container}>
@@ -64,9 +101,11 @@ export default function Chatscreen() {
           showsHorizontalScrollIndicator={false} 
           contentContainerStyle={styles.scrollViewContent}
         >
-          {entries?.map((entry, index) => (
-            <TouchableOpacity key={index} onPress={()=>handleChatModal(entry)}>
-            <Matches  entry={entry}  />
+          {uniqueEntries?.map((entry, index) => (
+            <TouchableOpacity key={index} onPress={() => handleChatModal(entry)}>
+              <Matches entry={entry} username={getUsernameById(entry.user_1_id === user_id ? entry.user_2_id : entry.user_1_id)} 
+              profile_picture={getProfilePictureById(entry.user_1_id === user_id ? entry.user_2_id : entry.user_1_id)}
+              />
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -82,20 +121,26 @@ export default function Chatscreen() {
       </View>
       <View>
         <ScrollView>
-          {entries?.map((entry, index) => (
+          {uniqueEntries?.map((entry, index) => (
             <TouchableOpacity key={index} onPress={() => handleChatModal(entry)}>
-              <Chatdetails entry={entry} />
+              <Chatdetails entry={entry} username={getUsernameById(entry.user_1_id === user_id ? entry.user_2_id : entry.user_1_id)}
+              profile_picture={getProfilePictureById(entry.user_1_id === user_id ? entry.user_2_id : entry.user_1_id)}
+              />
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
 
       {selectedEntry && (
+        
         <Modal visible={chatModal} transparent={true} animationType="slide">
           <View style={styles.modalContainer}>
-            <ChatCard entry={selectedEntry} />
+            
+            <ChatCard entry={selectedEntry} username={getUsernameById(selectedEntry.user_1_id === user_id ? selectedEntry.user_2_id : selectedEntry.user_1_id)}
+            profile_picture={getProfilePictureById(selectedEntry.user_1_id === user_id ? selectedEntry.user_2_id : selectedEntry.user_1_id)}
+             />
             <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="black"  />
+              <Ionicons name="close" size={24} color="black" />
             </TouchableOpacity>
           </View>
         </Modal>
@@ -149,7 +194,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: hp(8),
     right: wp(5),
-
   },
   closeButtonText: {
     fontSize: wp(4),

@@ -1,28 +1,25 @@
-import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
+import { View, Text, StyleSheet, StatusBar, ImageBackground } from 'react-native';
+import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, View, StyleSheet } from 'react-native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import Welcome from './src/screens/Welcome';
 import Home from './src/screens/Home';
-import Chatdetails from './src/component/Chatdetails';
 import Chatscreen from './src/screens/Chatscreen';
 import Profilescreen from './src/screens/Profilescreen';
+import Chatdetails from './src/component/Chatdetails';
 import Login from './src/screens/Login';
 import Register from './src/screens/Register';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
 import { AuthProvider, useAuth } from './src/context/Authcontext';
-import React from 'react';
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function MainTabNavigator() {
   const { onLogout, authState } = useAuth();
-  const { token } = authState;
-  const user = token ? token : 'No User';
+  const { token, username, profile_picture } = authState;
   const navigation = useNavigation();
 
   const handleLogout = async () => {
@@ -88,9 +85,17 @@ function MainTabNavigator() {
             />
           ),
           headerLeft: () => (
-            user ? (
+            username ? (
               <View style={styles.userIconContainer}>
-                <Text style={styles.userIconText}>{token ? token.slice(0, 1) : null}</Text>
+                {profile_picture ? (
+                  <ImageBackground
+                    source={{ uri: profile_picture }}
+                    style={styles.userIconImage}
+                    imageStyle={{ borderRadius: wp(5) }}
+                  />
+                ) : (
+                  <Text style={styles.userIconText}>{username.slice(0, 1)}</Text>
+                )}
               </View>
             ) : null
           ),
@@ -111,9 +116,17 @@ function MainTabNavigator() {
             />
           ),
           headerLeft: () => (
-            user ? (
+            username ? (
               <View style={styles.userIconContainer}>
-                <Text style={styles.userIconText}>{token ? token.slice(0, 1) : null}</Text>
+                {profile_picture? (
+                  <ImageBackground
+                    source={{ uri: profile_picture }}
+                    style={styles.userIconImage}
+                    imageStyle={{ borderRadius: wp(5) }}
+                  />
+                ) : (
+                  <Text style={styles.userIconText}>{username.slice(0, 1)}</Text>
+                )}
               </View>
             ) : null
           ),
@@ -134,9 +147,17 @@ function MainTabNavigator() {
             />
           ),
           headerLeft: () => (
-            user ? (
+            username ? (
               <View style={styles.userIconContainer}>
-                <Text style={styles.userIconText}>{token ? token.slice(0, 1) : null}</Text>
+                {profile_picture?  (
+                  <ImageBackground
+                    source={{ uri: profile_picture }}
+                    style={styles.userIconImage}
+                    imageStyle={{ borderRadius: wp(5) }}
+                  />
+                ) : (
+                  <Text style={styles.userIconText}>{username.slice(0, 1)}</Text>
+                )}
               </View>
             ) : null
           ),
@@ -147,7 +168,7 @@ function MainTabNavigator() {
 }
 
 const RootNavigator = () => {
-  const { authState } = useAuth();
+  const { authState, username } = useAuth();
 
   return (
     <NavigationContainer>
@@ -195,6 +216,11 @@ const styles = StyleSheet.create({
     borderRadius: wp(5),
     marginLeft: wp(4),
     marginBottom: hp(2),
+  },
+  userIconImage: {
+    width: wp(10),
+    height: wp(10),
+    borderRadius: wp(5),
   },
   userIconText: {
     color: 'white',
