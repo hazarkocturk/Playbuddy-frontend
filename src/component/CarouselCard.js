@@ -6,12 +6,12 @@ const CarouselCard = ({ entry }) => {
   return (
     <View style={styles.cardContainer}>
       <Image
-        source={{ uri: entry.picture.large }}
+        source={{ uri: entry.profile_picture }}
         style={styles.image}
       />
       <View style={styles.textContainer}>
-        <Text style={styles.text}>{entry.name.first} {entry.name.last}, {entry.dob.age}</Text>
-        <Text style={styles.text}>{entry.location.city}, {entry.location.country}</Text>
+        <Text style={styles.text}>{entry.username} </Text>
+        <Text style={styles.text}>{entry.location}</Text>
       </View>
     </View>
   );

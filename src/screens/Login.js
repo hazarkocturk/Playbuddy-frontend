@@ -1,4 +1,4 @@
-import { View, Text, SafeAreaView, TextInput, TouchableOpacity,Image } from 'react-native';
+import { View, Text, SafeAreaView, TextInput, TouchableOpacity, Image } from 'react-native';
 import React, { useState } from 'react';
 import { useAuth } from '../context/Authcontext';
 import { useNavigation } from '@react-navigation/native';
@@ -6,18 +6,18 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 
 const Login = () => {
   const { onLogin } = useAuth();
-  const [email, setEmail] = useState('');
+  const [usernameOrEmail, setusernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigation = useNavigation();
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!usernameOrEmail || !password) {
       setError('Email and password are required.');
       return;
     }
     try {
-      const result = await onLogin(email, password);
+      const result = await onLogin(usernameOrEmail, password);
       if (result) {
         alert('Login Success');
         navigation.navigate('Main');
@@ -25,7 +25,8 @@ const Login = () => {
         alert('Login Failed');
       }
     } catch (error) {
-      alert('Login Error', error);
+      console.error('Login Error:', error.response ? error.response.data : error.message);
+      setError('Login failed. Please try again.');
     }
   }
 
@@ -57,9 +58,9 @@ const Login = () => {
         </Text>
       
         <TextInput
-          placeholder='Email'
-          value={email}
-          onChangeText={setEmail}
+          placeholder='Email or Username'
+          value={usernameOrEmail}
+          onChangeText={setusernameOrEmail}
           className='mt-2 p-4 bg-white rounded-lg w-full'
           style={{ 
             fontFamily: 'SpaceGroteskRegular',
@@ -108,4 +109,4 @@ const Login = () => {
   )
 }
 
-export default Login
+export default Login;

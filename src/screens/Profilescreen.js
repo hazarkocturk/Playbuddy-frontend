@@ -1,46 +1,124 @@
-import { View, Text, Image, ScrollView, Modal, TouchableOpacity, TextInput, StyleSheet } from "react-native";
-import React, { useState } from "react";
+import { View, Text, Image, ScrollView, Modal, TouchableOpacity, TextInput, StyleSheet, Platform, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/Authcontext";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 
 export default function Profilescreen() {
-  const { authState } = useAuth();
-  const { token } = authState;
-  const user = token ? token : { name: "No User", image: null, lastName: null, age: null, city: null, country: null, tags: null };
+  const { onLogout, authState } = useAuth();
+  const { token, username: initialUsername, user_id, email, profile_picture } = authState;
   const [modalVisible, setModalVisible] = useState(false);
   const [model2, setModel2] = useState(false);
+  const [bio, setBio] = useState('');
+  const [location, setLocation] = useState('');
+  const [games, setGames] = useState('');
+  const [platforms, setPlatforms] = useState('');
+  const [skill_level, setSkill_level] = useState('');
   const [photo, setPhoto] = useState(null);
+  const [username, setUsername] = useState(initialUsername);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch(`https://playbuddy-3198da0e5cb7.herokuapp.com/api/users/${user_id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        console.log('Data:', data);
+        setBio(data.bio);
+        setLocation(data.location);
+        setGames(data.games);
+        setPlatforms(data.platforms);
+        setSkill_level(data.skill_level);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchUser();
+  }, [user_id, token]);
+
+  const gamesArray = games.split(",");
+  const platformsArray = platforms.split(",");
 
   const handlePickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
+
+    console.log(result);
+
     if (!result.canceled) {
-      setPhoto(result.assets[0].uri);
-      console.log(result.assets[0].uri);
+      let { uri } = result.assets[0];
+      console.log('Original URI:', uri);
+
+      if (Platform.OS === 'android' && !uri.startsWith('file://')) {
+        uri = 'file://' + uri;
+      }
+      console.log('Processed URI:', uri);
+
+      try {
+        const manipulatedImage = await ImageManipulator.manipulateAsync(
+          uri,
+          [{ resize: { width: 800, height: 600 } }],
+          { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+        );
+
+        setPhoto({
+          uri: manipulatedImage.uri,
+          name: `profile_picture.jpg`,
+          type: `image/jpeg`
+        });
+
+        console.log('Photo:', manipulatedImage);
+      } catch (error) {
+        console.error(error);
+        Alert.alert('Error', 'Failed to resize image. Please try again.');
+      }
     }
   };
 
   const handleUpdatePhoto = async () => {
+    if (!photo) {
+      console.error('No photo to upload');
+      return;
+    }
+
     try {
-      const response = await fetch("YOUR_API_ENDPOINT", {
+      console.log(user_id, token, photo);
+      const formData = new FormData();
+      formData.append('profile_picture', {
+        uri: photo.uri,
+        type: photo.type,
+        name: photo.name,
+      });
+
+      const response = await fetch(`https://playbuddy-3198da0e5cb7.herokuapp.com/api/users/${user_id}`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+          'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json',
         },
-        body: JSON.stringify({ image: photo }),
+        body: formData,
       });
+
       const data = await response.json();
-      console.log(data);
-      setModalVisible(false);  
+      if (response.ok) {
+        setModalVisible(false);
+        Alert.alert('Success', 'Profile picture updated successfully.');
+      } else {
+        console.error('Error:', data);
+        Alert.alert('Error', 'Failed to update profile picture.');
+      }
     } catch (error) {
       console.error(error);
+      Alert.alert('Error', 'Failed to update profile picture. Please try again.');
     }
   };
 
@@ -51,16 +129,34 @@ export default function Profilescreen() {
 
   const handleUpdateInfo = async () => {
     try {
-      const response = await fetch("YOUR_API_ENDPOINT", {
+      const formData = new FormData();
+      formData.append('username', username);
+      formData.append('bio', bio);
+      formData.append('location', location);
+      formData.append('games', games);
+      formData.append('platforms', platforms);
+      formData.append('skill_level', skill_level);
+
+      const response = await fetch(`https://playbuddy-3198da0e5cb7.herokuapp.com/api/users/${user_id}`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+          'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json',
         },
-        body: JSON.stringify({ name: user.name, lastName: user.lastName, age: user.age, city: user.city, country: user.country, tags: user.tags }),
+        body: formData,
       });
+
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Profile updated successfully.');
+        setModel2(false);
+      } else {
+        console.error('Error:', data);
+        Alert.alert('Error', 'Failed to update profile.');
+      }
     } catch (error) {
       console.error(error);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
   };
 
@@ -70,7 +166,7 @@ export default function Profilescreen() {
     <ScrollView style={styles.container}>
       <View style={styles.imageContainer}>
         <Image
-          source={user.image ? { uri: user.image } : require("../../assets/images/kalafat.png")}
+          source={profile_picture ? { uri: profile_picture } : require("../../assets/images/kalafat.png")}
           style={styles.profileImage}
         />
         <View style={styles.crownIcon}>
@@ -117,7 +213,7 @@ export default function Profilescreen() {
       <View style={styles.infoContainer}>
         <View style={styles.nameContainer}>
           <Text style={styles.nameText}>
-            {user.name ? user.name : "Deniz"} {user.lastName ? user.lastName : "Kalafat"}, {user.age ? user.age : 40}
+            {username ? username : 'Homeless User'}, {skill_level ? skill_level : 'Unknown'}
           </Text>
           <View style={styles.editIcon}>
             <Ionicons
@@ -131,12 +227,12 @@ export default function Profilescreen() {
               <View style={styles.modalBackground}>
                 <View style={styles.modalContainer}>
                   <Text style={styles.modalTitle}>Edit your profile</Text>
-                  <TextInput placeholder="Name" value={user.name} onChangeText={(text) => (user.name = text)} style={styles.input} />
-                  <TextInput placeholder="Last Name" value={user.lastName} onChangeText={(text) => (user.lastName = text)} style={styles.input} />
-                  <TextInput placeholder="Age" value={user.age} onChangeText={(text) => (user.age = text)} style={styles.input} />
-                  <TextInput placeholder="City" value={user.city} onChangeText={(text) => (user.city = text)} style={styles.input} />
-                  <TextInput placeholder="Country" value={user.country} onChangeText={(text) => (user.country = text)} style={styles.input} />
-                  <TextInput placeholder="Tags" value={user.tags} onChangeText={(text) => (user.tags = text)} style={styles.input} />
+                  <TextInput placeholder="Name" value={username} onChangeText={(text) => setUsername(text)} style={styles.input} />
+                  <TextInput placeholder="City" value={location} onChangeText={(text) => setLocation(text)} style={styles.input} />
+                  <TextInput placeholder="Tags" value={games} onChangeText={(text) => setGames(text)} style={styles.input} />
+                  <TextInput placeholder="Tags" value={platforms} onChangeText={(text) => setPlatforms(text)} style={styles.input} />
+                  <TextInput placeholder="Tags" value={bio} onChangeText={(text) => setBio(text)} style={styles.input} />
+                  <TextInput placeholder="Tags" value={skill_level} onChangeText={(text) => setSkill_level(text)} style={styles.input} />
                   <View style={styles.modalButtonContainer}>
                     <TouchableOpacity style={styles.submitButton} onPress={handleUpdateInfo}>
                       <Text style={styles.buttonText}>Submit</Text>
@@ -152,11 +248,16 @@ export default function Profilescreen() {
         </View>
         <View style={styles.locationContainer}>
           <Text style={styles.locationText}>
-            {user.city ? user.city : "Athens"}, {user.country ? user.country : "Greece"}
+            {location}
           </Text>
         </View>
         <View style={styles.tagsContainer}>
-          {(user.tags ? user.tags : defaultTags).map((tag, index) => (
+          {(gamesArray.length > 0 ? gamesArray : defaultTags).map((tag, index) => (
+            <View key={index} style={styles.tag}>
+              <Text style={styles.tagText}>{tag}</Text>
+            </View>
+          ))}
+          {(platformsArray.length > 0 ? platformsArray : defaultTags).map((tag, index) => (
             <View key={index} style={styles.tag}>
               <Text style={styles.tagText}>{tag}</Text>
             </View>
@@ -166,7 +267,6 @@ export default function Profilescreen() {
     </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -312,4 +412,3 @@ const styles = StyleSheet.create({
     color: "white",
   },
 });
-

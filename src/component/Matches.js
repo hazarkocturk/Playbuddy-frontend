@@ -2,17 +2,18 @@ import { View, Text, StyleSheet, ImageBackground } from 'react-native';
 import React from 'react';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
-export default function Matches({ entry }) {
+export default function Matches({ entry, username, profile_picture }) {
+  
   return (
     <View style={styles.container}>
       <View style={styles.circle}>
         <ImageBackground 
-          source={{ uri: entry.picture.medium }} 
+          source={{ uri: profile_picture }} 
           style={styles.image}
           imageStyle={{ borderRadius: wp(10) }}  
         />
       </View>
-      <Text style={styles.text}>{entry.name.first}</Text>
+      <Text style={styles.text}>{username}</Text>
     </View>
   );
 }
